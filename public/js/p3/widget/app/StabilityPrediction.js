@@ -30,6 +30,8 @@ define([
 
     startup: function () {
       var _self = this;
+//      var validIDs = rcsbList.getEntryIds();
+//      console.log("valid IDs: ", validIDs);
       if (this._started) { return; }
 //      this.inherited(arguments);
       if (this.requireAuth && (window.App.authorizationToken === null || window.App.authorizationToken === undefined)) {
