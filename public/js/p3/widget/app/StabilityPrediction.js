@@ -1,12 +1,14 @@
 define([
   'dojo/_base/declare', 'dojo/_base/array', 'dojo/topic', 'dijit/_WidgetBase', 'dojo/on',
+  'dojo/fx/Toggler',
   'dojo/dom-class', 'dijit/_TemplatedMixin', 'dijit/_WidgetsInTemplateMixin',
   'dojo/text!./templates/StabilityPrediction.html', './AppBase',
-  'dojo/_base/lang', '../../WorkspaceManager'
+  'dojo/_base/lang', '../../WorkspaceManager', './rcsbList'
 ], function (
   declare, array, Topic, WidgetBase, on,
+  Toggler,
   domClass, Templated, WidgetsInTemplate,
-  Template, AppBase, lang, WorkspaceManager
+  Template, AppBase, lang, WorkspaceManager, rcsbList
 ) {
   return declare([AppBase], {
     baseClass: 'StabilityPrediction',
@@ -30,15 +32,21 @@ define([
 
     startup: function () {
       var _self = this;
-//      var validIDs = rcsbList.getEntryIds();
-//      console.log("valid IDs: ", validIDs);
+      rcsbList.getEntryIds().then(function(ids) {
+          console.log("Total IDs:", ids.length);
+          var validPDBIDs = ids;
+          console.log("First few IDs:", ids.slice(0, 10));
+          console.log("All IDs: ", validPDBIDs);
+        }, function(err) {
+          console.error("Error fetching PDB IDs:", err);
+        });
       if (this._started) { return; }
-//      this.inherited(arguments);
+      this.inherited(arguments);
       if (this.requireAuth && (window.App.authorizationToken === null || window.App.authorizationToken === undefined)) {
         return;
       }
       _self.defaultPath = WorkspaceManager.getDefaultFolder() || _self.activeWorkspacePath;
-//      _self.output_file.set('value', _self.defaultPath);
+      _self.output_path.set('value', _self.defaultPath);
       this.form_flag = false;
       try {
         this.intakeRerunForm();
@@ -46,137 +54,8 @@ define([
         console.error(error);
       }
     },
-
-/*
-    onTaxIDChange: function (val) {
-      this._autoNameSet = true;
-      var tax_item = this.tax_idWidget.get('item');
-      if (tax_item) {
-        var tax_id = tax_item.taxon_id;
-      }
-      // var sci_name = this.tax_idWidget.get('item').taxon_name;
-      // var tax_obj=this.tax_idWidget.get("item");
-      if (tax_id) {
-        var name_promise = this.scientific_nameWidget.store.get(tax_id);
-        name_promise.then(lang.hitch(this, function (tax_obj) {
-          if (tax_obj) {
-            this.scientific_nameWidget.set('item', tax_obj);
-            this.scientific_nameWidget.validate();
-          }
-        }));
-        // this.scientific_nameWidget.set('value',sci_name);
-        // this.scientific_nameWidget.set('displayedValue',sci_name);
-        // this.scientific_nameWidget.set("item",tax_obj);
-        // this.scientific_nameWidget.validate();
-
-      }
-      this._autoTaxSet = false;
-    },
-
-    onRecipeChange: function (val) {
-      this.scientific_nameWidget.set('includeBacteria', false);
-      this.scientific_nameWidget.set('setBacteriophage', false);
-      this.scientific_nameWidget.set('includeViruses', false);
-      if (this.recipe.getValue() == 'viral') {
-        this.scientific_nameWidget.set('placeHolder', 'e.g. Bat coronavirus');
-        this.scientific_nameWidget.set('includeViruses', true);
-      }
-      else if (this.recipe.getValue() == 'default') {
-        this.scientific_nameWidget.set('placeHolder', 'e.g. Bacillus Cereus');
-        this.scientific_nameWidget.set('includeBacteria', true);
-      }
-      else if (this.recipe.getValue() == 'phage') {
-        this.scientific_nameWidget.set('placeHolder', 'e.g. Bacteriophage sp.');
-        this.scientific_nameWidget.set('setBacteriophage', true);
-      }
-      else if (this.recipe.getValue() == '') {
-        this.scientific_nameWidget.set('setBacteriophage', false);
-        this.scientific_nameWidget.set('includeBacteria', true);
-        this.scientific_nameWidget.set('includeViruses', true);
-      }
-    },
-*/
-
-
-
-    openJobsList: function () {
-      Topic.publish('/navigate', { href: '/job/' });
-    },
-
-    updateOutputName: function () {
-      var charError = document.getElementsByClassName('charError')[0];
-      charError.innerHTML = '&nbsp;';
-      var current_output_name = [];
-      var sci_item = this.scientific_nameWidget.get('item');
-      var label_value = this.myLabelWidget.get('value');
-      if (label_value.indexOf('/') !== -1 || label_value.indexOf('\\') !== -1) {
-        return charError.innerHTML = 'slashes are not allowed';
-      }
-      if (sci_item && sci_item.lineage_names.length > 0) {
-        current_output_name.push(sci_item.lineage_names.slice(-1)[0].replace(/\(|\)|\||\/|:/g, ''));
-      }
-      if (label_value.length > 0) {
-        current_output_name.push(label_value);
-      }
-      if (current_output_name.length > 0) {
-        this.output_nameWidget.set('value', current_output_name.join(' '));
-      }
-    },
-
-    onSuggestNameChange: function (val) {
-      this._autoTaxSet = true;
-      var tax_id = this.scientific_nameWidget.get('value');
-      if (tax_id) {
-        // var tax_promise=this.tax_idWidget.store.get("?taxon_id="+tax_id);
-        // tax_promise.then(lang.hitch(this, function(tax_obj) {
-        //    if(tax_obj && tax_obj.length){
-        //        this.tax_idWidget.set('item',tax_obj[0]);
-        //    }
-        // }));
-        this.tax_idWidget.set('displayedValue', tax_id);
-        this.tax_idWidget.set('value', tax_id);
-        this.updateOutputName();
-      }
-      this._autoNameSet = false;
-      /* if (val && !this.output_nameWidget.get('value') || (this.output_nameWidget.get('value')&&this._selfSet)  ){
-        var abbrv=this.scientific_nameWidget.get('displayedValue');
-        abbrv=abbrv.match(/[^\s]+$/);
-        this.output_nameWidget.set('value',abbrv);
-      } */
-    },
-
-    getValues: function () {
-      var values = this.inherited(arguments);
-      // values.scientific_name = this.output_nameWidget.get('displayedValue');
-      // values.taxonomy_id = this.tax_idWidget.get('displayedValue');
-      values = this.checkBaseParameters(values);
-      return values;
-    },
-
-    checkBaseParameters: function (values) {
-      this.output_file = this.output_fileWidget.get('displayedValue');
-      values.scientific_name = this.output_name;
-
-      return values;
-    },
-
-    addRerunFields: function (job_params) {
-      /*
-      if (job_params['recipe'] === 'default') {
-        this.default.set('checked', true);
-      }
-      else if (job_params['recipe'] === 'viral') {
-        this.viral.set('checked', true);
-      }
-      else { // bacteriophages
-        this.phage.set('checked', true);
-      }
-      */
-      this.recipe.set('value', job_params['recipe']);
-      // must set tax_idWidget before scientific_nameWidget
-      this.tax_idWidget.set('value', job_params['taxonomy_id']);
-      this.tax_idWidget.set('displayedValue', job_params['taxonomy_id']);
-      this.scientific_nameWidget.set('item', job_params['scientific_name']);
+    postCreate: function () {
+      this.onInputChange()
     },
 
     onPdbPreview: function (evt) {
@@ -200,6 +79,173 @@ define([
       Topic.publish('/navigate', { href: '/view/ProteinStructure#path=' + pdb_ws_path, target: 'blank' })
     },
 
+    onDropdownChange: function (evt) {
+      console.log(this.smiles_dropdown.value)
+    },
+
+    onProteinInputChange: function (evt) {
+      this.protein_databank_selection
+      if (this.protein_databank_selection.checked) {
+        this.protein_databank_selection.value = "input_pdb";
+      }
+      else if (this.user_pdb_file.checked) {
+        this.protein_databank_selection.value = "user_pdb_file";
+      }
+    },
+
+    onInputChange: function (evt) {
+      if (typeof this.protein_databank_selection != "undefined"){
+        // protein radio buttons
+        if (this.protein_databank_selection.checked) {
+          // set display logic
+          dojo.style(this.block_pdb_list, "display", "block");
+          dojo.style(this.block_pdb_upload, "display", "none");
+        }
+        else if (this.user_pdb_file.checked) {
+          dojo.style(this.block_pdb_list, "display", "none");
+          dojo.style(this.block_pdb_upload, "display", "block");
+        }
+      }
+      },
+
+    openJobsList: function () {
+      Topic.publish('/navigate', { href: '/job/' });
+    },
+// exaple
+    // onOutputPathChange: function (val) {
+    //   this.inherited(arguments);
+    //   this.checkParameterRequiredFields();
+    // },
+    /*
+    {
+    "pdb_id": "1A47",
+    "pdb_preview": "",
+    "input": "smiles_list",
+    "smiles_text": "asdfasdf",
+    "ligand_ws_file": "",
+    "output_path": "/olson@patricbrc.org/home/test/test1/test2",
+    "output_file": "abc"
+} */
+    getValues: function () {
+      var values = this.inherited(arguments);
+      var submit_values = {
+        ligand_library_type: values.input,
+        output_path: values.output_path,
+        output_file: values.output_file,
+      }
+      if (values.protein_input === "input_pdb")
+      {
+        submit_values.protein_input_type = values.protein_input
+        submit_values.input_pdb = [values.pdb_id]
+      }
+      // repeat for pdb files
+      else if (values.protein_input === "user_pdb_file")
+      {
+        submit_values.protein_input_type = values.protein_input
+        submit_values.user_pdb_file = Array.isArray(values.user_pdb)
+          ? values.user_pdb
+          : values.user_pdb ? [values.user_pdb] : [];
+      }
+
+      if (values.input === 'smiles_list')
+      {
+        /* Parse out either smiles strings, one per line, or
+         * id / smiles-string pairs.
+         */
+
+        var lines = values.smiles_text.split('\n').map((l) => l.trim()).filter((l) => l.length > 0);
+        var row = 0;
+        var elts = lines.map((l) => {
+          row++;
+          var cols = l.split(/\s+/);
+          if (cols.length >= 2)
+          {
+            return cols.slice(0, 2);
+          }
+          else if (cols.length === 1) {
+            return ['id-' + row, cols[0]];
+          }
+        });
+
+        submit_values.ligand_smiles_list = elts;
+      }
+      else if (values.input === 'ws_file')
+      {
+        submit_values.ligand_ws_file = values.ligand_ws_file;
+      }
+      else if (values.input === 'named_library')
+      {
+        submit_values.ligand_named_library = values.smiles_dropdown
+      }
+      return submit_values;
+    },
+
+    checkParameterRequiredFields: function () {
+      if (
+        (this.pdb_list.get('item') || this.user_pdb.get('value')) &&
+        this.output_path.get('value') &&
+        this.output_file.get('displayedValue')
+      ) {
+        this.validate();
+      } else {
+        if (this.submitButton) {
+          this.submitButton.set('disabled', true);
+        }
+      }
+    },
+
+    onOutputPathChange: function (val) {
+      this.inherited(arguments);
+      this.checkParameterRequiredFields();
+    },
+
+    checkOutputName: function (val) {
+      this.inherited(arguments);
+      this.checkParameterRequiredFields();
+    },
+
+    addRerunFields: function (job_params) {
+      // Protein Input
+      if (job_params.protein_input_type === 'user_pdb_file'){
+        this.protein_databank_selection.set('checked', false);
+        this.user_pdb.set('value', job_params["user_pdb_file"])
+        this.user_pdb_file.set('checked', true);
+      }
+      else if (job_params.protein_input_type === 'input_pdb'){
+        this.pdb_list.set('value', job_params["input_pdb"]);
+      }
+      else {
+        console.log( 'Invalid protein input');
+      }
+      // ligand library is not working just yet
+      var ligand_library_type = job_params['ligand_library_type'];
+      if (ligand_library_type === "ws_file"){
+        this.ws_file.checked
+        this.ws_file.set('value', ligand_library_type);
+        this.ligand_ws_file.set('value', job_params['ligand_ws_file']);
+      }
+      else if (ligand_library_type === "smiles_list"){
+        this.input_sequence.checked;
+        this.input_sequence.set('value', ligand_library_type);
+        let user_input = job_params['ligand_smiles_list'];
+        let combined_string = '';
+        user_input.forEach(subArray => {
+          console.log(subArray);
+          combined_string += subArray[0] + ' ' + subArray[1] + '\n'
+        });
+        this.smiles_text.set('value', combined_string);
+      }
+      else if (ligand_library_type === "named_library"){
+        this.ligand_named_library.checked;
+        this.ligand_named_library.set('value', ligand_library_type);
+        this.smiles_dropdown_attach_point.set('value', job_params['ligand_named_library']);
+      }
+      else {
+        console.log("Improper ligand library type passed.")
+      }
+      this.output_path.set('value', job_params['output_path']);
+      },
+
     intakeRerunForm: function () {
       // assuming only one key
       var service_fields = window.location.search.replace('?', '');
@@ -210,10 +256,9 @@ define([
         var sessionStorage = window.sessionStorage;
         if (sessionStorage.hasOwnProperty(rerun_key)) {
           try {
-            var param_dict = { 'output_folder': 'output_file', 'mode': 'pdb_file' };
-            // var widget_map = {"tax_id":"tax_idWidget"};
-            // param_dict["widget_map"] = widget_map;
+            var param_dict = { 'output_folder': 'output_path', 'strategy': 'recipe' };
             AppBase.prototype.intakeRerunFormBase.call(this, param_dict);
+            // This grabs the job parameters according to the rerun key (from the brower memory)
             this.addRerunFields(JSON.parse(sessionStorage.getItem(rerun_key)));
             this.form_flag = true;
           } catch (error) {
