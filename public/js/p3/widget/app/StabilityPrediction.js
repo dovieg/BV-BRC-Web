@@ -3,12 +3,12 @@ define([
   'dojo/fx/Toggler',
   'dojo/dom-class', 'dijit/_TemplatedMixin', 'dijit/_WidgetsInTemplateMixin',
   'dojo/text!./templates/StabilityPrediction.html', './AppBase',
-  'dojo/_base/lang', '../../WorkspaceManager', './rcsbList'
+  'dojo/_base/lang', '../../WorkspaceManager', './rcsbList', './pdbDropdown'
 ], function (
   declare, array, Topic, WidgetBase, on,
   Toggler,
   domClass, Templated, WidgetsInTemplate,
-  Template, AppBase, lang, WorkspaceManager, rcsbList
+  Template, AppBase, lang, WorkspaceManager, rcsbList, pdbDropdown
 ) {
   return declare([AppBase], {
     baseClass: 'StabilityPrediction',
@@ -37,6 +37,8 @@ define([
           var validPDBIDs = ids;
           console.log("First few IDs:", ids.slice(0, 10));
           console.log("All IDs: ", validPDBIDs);
+          this.pdb_list = validPDBIDs;
+          pdbDropdown.initDropdown("pdbDropdown", this.pdb_list);
         }, function(err) {
           console.error("Error fetching PDB IDs:", err);
         });
@@ -58,29 +60,9 @@ define([
       this.onInputChange()
     },
 
-    onPdbPreview: function (evt) {
-      var pdb_id = this.pdb_list.get('displayedValue');
-      Topic.publish('/navigate', { href: '/view/ProteinStructure#accession=' + pdb_id, target: 'blank' })
-    },
-
-    onPdbIdChange: function (evt) {
-      this.pdb_preview.set('disabled', !this.pdb_list.get('displayedValue'));
-    },
-
     onPbdFileUpload: function (val) {
       this.inherited(arguments)
       this.user_pdb_preview.set('disabled', false);
-    },
-
-    onPdbPreviewFileUpload: function (val) {
-      this.inherited(arguments)
-      var pdb_ws_path = this.user_pdb.value;
-      console.log(pdb_ws_path)
-      Topic.publish('/navigate', { href: '/view/ProteinStructure#path=' + pdb_ws_path, target: 'blank' })
-    },
-
-    onDropdownChange: function (evt) {
-      console.log(this.smiles_dropdown.value)
     },
 
     onProteinInputChange: function (evt) {
@@ -110,74 +92,6 @@ define([
 
     openJobsList: function () {
       Topic.publish('/navigate', { href: '/job/' });
-    },
-// exaple
-    // onOutputPathChange: function (val) {
-    //   this.inherited(arguments);
-    //   this.checkParameterRequiredFields();
-    // },
-    /*
-    {
-    "pdb_id": "1A47",
-    "pdb_preview": "",
-    "input": "smiles_list",
-    "smiles_text": "asdfasdf",
-    "ligand_ws_file": "",
-    "output_path": "/olson@patricbrc.org/home/test/test1/test2",
-    "output_file": "abc"
-} */
-    getValues: function () {
-      var values = this.inherited(arguments);
-      var submit_values = {
-        ligand_library_type: values.input,
-        output_path: values.output_path,
-        output_file: values.output_file,
-      }
-      if (values.protein_input === "input_pdb")
-      {
-        submit_values.protein_input_type = values.protein_input
-        submit_values.input_pdb = [values.pdb_id]
-      }
-      // repeat for pdb files
-      else if (values.protein_input === "user_pdb_file")
-      {
-        submit_values.protein_input_type = values.protein_input
-        submit_values.user_pdb_file = Array.isArray(values.user_pdb)
-          ? values.user_pdb
-          : values.user_pdb ? [values.user_pdb] : [];
-      }
-
-      if (values.input === 'smiles_list')
-      {
-        /* Parse out either smiles strings, one per line, or
-         * id / smiles-string pairs.
-         */
-
-        var lines = values.smiles_text.split('\n').map((l) => l.trim()).filter((l) => l.length > 0);
-        var row = 0;
-        var elts = lines.map((l) => {
-          row++;
-          var cols = l.split(/\s+/);
-          if (cols.length >= 2)
-          {
-            return cols.slice(0, 2);
-          }
-          else if (cols.length === 1) {
-            return ['id-' + row, cols[0]];
-          }
-        });
-
-        submit_values.ligand_smiles_list = elts;
-      }
-      else if (values.input === 'ws_file')
-      {
-        submit_values.ligand_ws_file = values.ligand_ws_file;
-      }
-      else if (values.input === 'named_library')
-      {
-        submit_values.ligand_named_library = values.smiles_dropdown
-      }
-      return submit_values;
     },
 
     checkParameterRequiredFields: function () {

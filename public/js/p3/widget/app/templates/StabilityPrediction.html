@@ -43,13 +43,22 @@
         </div>
         <!--  Protein Databank Selection Block  -->
         <div data-dojo-attach-point="block_pdb_list" style="display: block;">
-          <div data-dojo-type="p3/widget/StructureIdSelector" data-dojo-attach-point="pdb_list" name="pdb_id"
+<!---
+        <div data-dojo-type="p3/widget/StructureIdSelector" data-dojo-attach-point="pdb_list" name="pdb_id"
           style="width:50%" data-dojo-attach-event="onChange:onPdbIdChange" required="false" data-dojo-props="">
         </div>
-
+-->
+      <input id="pdbDropdown" type="text" placeholder="Type PDB ID" style="width:65%;" required>
+        <div id="pdbError" style="color:red; display:none; margin-top:4px;"></div>
+        <ul id="pdbOptions"
+            style="border:1px solid #ccc; max-height:200px; overflow:auto; list-style:none; padding:0; margin-top:4px; display:none;">
+        </ul>
+<!--
         <input id="${id}_pdb_preview" data-dojo-type="dijit/form/Button" data-dojo-attach-point="pdb_preview"
           name="pdb_preview" disabled label="Preview PDB" data-dojo-attach-event="onClick:onPdbPreview">
+      -->
         </div>
+
         <!-- PDB File Upload Block -->
         <div data-dojo-attach-point="block_pdb_upload" style="display: block;">
           <div style="display: flex; align-items: center;">
@@ -60,10 +69,6 @@
                 data-dojo-props="type:['txt','unspecified', 'pdb'],multi:false,promptMessage:'Select a PDB file for the protein of interest',missingMessage:'Protein input is required',placeHolder:'PDB data file'">
             </div>
 
-            <!-- Preview Button Next to the Selector -->
-            <input id="${id}_user_pdb_preview" data-dojo-type="dijit/form/Button" data-dojo-attach-point="user_pdb_preview"
-                  name="user_pdb_preview" disabled label="Preview Structure" data-dojo-attach-event="onClick:onPdbPreviewFileUpload"
-                  style="margin-left: 10px;">
           </div>
         </div>
       </div>
