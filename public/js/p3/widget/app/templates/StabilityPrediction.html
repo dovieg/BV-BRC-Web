@@ -48,7 +48,11 @@
           style="width:50%" data-dojo-attach-event="onChange:onPdbIdChange" required="false" data-dojo-props="">
         </div>
 -->
-      <input id="pdbDropdown" type="text" placeholder="Type PDB ID" style="width:65%;" required>
+        <input id="pdbDropdown"
+          name="pdbDropdown"
+          data-dojo-type="dijit/form/TextBox"
+          placeholder="Type PDB ID"
+          required="true" />
         <div id="pdbError" style="color:red; display:none; margin-top:4px;"></div>
         <ul id="pdbOptions"
             style="border:1px solid #ccc; max-height:200px; overflow:auto; list-style:none; padding:0; margin-top:4px; display:none;">

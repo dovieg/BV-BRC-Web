@@ -94,6 +94,30 @@ define([
       Topic.publish('/navigate', { href: '/job/' });
     },
 
+    getValues: function () {
+      var values = this.inherited(arguments);
+      console.log("VALS", values);
+      var submit_values = {
+        output_path: values.output_path,
+        output_file: values.output_file,
+      }
+      if (values.protein_input === "input_pdb")
+      {
+        submit_values.protein_input_type = values.protein_input
+        submit_values.input_pdb = [values.pdbDropdown]
+      }
+      // repeat for pdb files
+      else if (values.protein_input === "user_pdb_file")
+      {
+        submit_values.protein_input_type = values.protein_input
+        submit_values.user_pdb_file = Array.isArray(values.user_pdb)
+          ? values.user_pdb
+          : values.user_pdb ? [values.user_pdb] : [];
+      }
+
+      return submit_values;
+    },
+
     checkParameterRequiredFields: function () {
       if (
         (this.pdb_list.get('item') || this.user_pdb.get('value')) &&
