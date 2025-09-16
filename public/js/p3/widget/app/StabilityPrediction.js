@@ -38,7 +38,7 @@ define([
           console.log("First few IDs:", ids.slice(0, 10));
           console.log("All IDs: ", validPDBIDs);
           this.pdb_list = validPDBIDs;
-          pdbDropdown.initDropdown("pdbDropdown", this.pdb_list);
+          pdbDropdown.initDropdown(this.pdb_list);
         }, function(err) {
           console.error("Error fetching PDB IDs:", err);
         });
